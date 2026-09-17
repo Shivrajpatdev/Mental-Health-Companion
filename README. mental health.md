@@ -20,14 +20,3 @@ Just open `mental-health-companion.html` in any modern browser. To host it publi
 2. Go to **Settings → Pages**
 3. Set the source branch (e.g. `main`) and root folder
 4. Your chatbot will be live at `https://<username>.github.io/<repo-name>/mental-health-companion.html`
-
-## Extending it
-Some natural next steps if you want to go further:
-- Add more keyword rules / responses in the `rules` array in the `<script>` section
-- Swap the rule-based engine for a real LLM by calling an API (this requires a backend or serverless function to keep your API key private — never put an API key directly in client-side HTML/JS)
-- Add a simple mood-history log using `localStorage` so users can see patterns over time
-- Localize responses into other languages
-- Have a licensed mental health professional review and expand the response library before wider release
-
-## License
-Choose a license appropriate for your use (MIT is a common permissive choice for small open-source tools like this).
