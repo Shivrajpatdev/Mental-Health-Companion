@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MindfulChat — A Supportive Companion</title>
+<style>
+  :root {
+    --bg: #f4f7f6;
+    --card-bg: #ffffff;
+    --primary: #5b8a72;
+    --primary-dark: #446a57;
+    --accent: #e8f3ee;
+    --text: #2b332f;
+    --muted: #6b7570;
+    --bot-bubble: #e8f3ee;
+    --user-bubble: #5b8a72;
+    --crisis-bg: #fff4f0;
+    --crisis-border: #e07a5f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .app {
+    width: 100%;
+    max-width: 640px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 90vh;
+  }
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 18px 20px;
+  }
+  header h1 { margin: 0; font-size: 1.3em; }
+  header p { margin: 4px 0 0; font-size: 0.85em; opacity: 0.9; }
+
+  .disclaimer {
+    background: var(--accent);
+    padding: 10px 20px;
+    font-size: 0.78em;
+    color: var(--muted);
+    border-bottom: 1px solid #dde8e2;
+  }
+
+  .mood-bar {
+    display: flex;
+    gap: 8px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+  }
+  .mood-bar button {
+    border: 1px solid #ccc;
+    background: white;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .mood-bar button:hover { background: var(--accent); border-color: var(--primary); }
+
+  .chat-window {
+    flex: 1;
+    padding: 16px 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .bubble {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    line-height: 1.4;
+    font-size: 0.95em;
+    white-space: pre-wrap;
+  }
+  .bot { align-self: flex-start; background: var(--bot-bubble); border-bottom-left-radius: 4px; }
+  .user { align-self: flex-end; background: var(--user-bubble); color: white; border-bottom-right-radius: 4px; }
+
+  .crisis-box {
+    align-self: stretch;
+    background: var(--crisis-bg);
+    border: 1px solid var(--crisis-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.9em;
+  }
+  .crisis-box strong { color: var(--crisis-border); }
+  .crisis-box a { color: var(--primary-dark); }
+
+  form {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid #eee;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 0.95em;
+    outline: none;
+  }
+  input[type="text"]:focus { border-color: var(--primary); }
+  button.send {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 18px;
+    cursor: pointer;
+    font-size: 0.95em;
+  }
+  button.send:hover { background: var(--primary-dark); }
+
+  footer {
+    text-align: center;
+    font-size: 0.72em;
+    color: var(--muted);
+    padding: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>🌿 MindfulChat</h1>
+    <p>A gentle, rule-based companion for everyday feelings</p>
+  </header>
+
+  <div class="disclaimer">
+    ⚠️ This is a simple, offline chatbot with pre-written responses — it is <strong>not</strong> therapy, medical advice, or a replacement for a mental health professional. If you're in crisis, please see the resources it can offer you, or contact local emergency services.
+  </div>
+
+  <div class="mood-bar" id="moodBar">
+    <button data-mood="great">😄 Great</button>
+    <button data-mood="okay">🙂 Okay</button>
+    <button data-mood="meh">😐 Meh</button>
+    <button data-mood="down">😔 Down</button>
+    <button data-mood="anxious">😰 Anxious</button>
+    <button data-mood="angry">😠 Angry</button>
+  </div>
+
+  <div class="chat-window" id="chatWindow"></div>
+
+  <form id="chatForm">
+    <input type="text" id="userInput" placeholder="Type how you're feeling..." autocomplete="off" />
+    <button type="submit" class="send">Send</button>
+  </form>
+
+  <footer>MindfulChat • Not a substitute for professional care</footer>
+</div>
+
+<script>
+const chatWindow = document.getElementById('chatWindow');
+const chatForm = document.getElementById('chatForm');
+const userInput = document.getElementById('userInput');
+const moodBar = document.getElementById('moodBar');
+
+// ---- Crisis keyword detection ----
+const crisisKeywords = [
+  'suicide', 'kill myself', 'end my life', 'want to die', 'self harm',
+  'self-harm', 'hurt myself', 'no reason to live', 'better off dead',
+  'can\'t go on', 'ending it all'
+];
+
+function containsCrisisLanguage(text) {
+  const lower = text.toLowerCase();
+  return crisisKeywords.some(k => lower.includes(k));
+}
+
+function crisisResponse() {
+  return `
+    <div class="crisis-box">
+      <strong>It sounds like you might be going through something really painful right now.</strong><br><br>
+      You deserve support from people trained to help. Please consider reaching out right now:<br>
+      • <strong>US:</strong> Call or text <a href="tel:988">988</a> (Suicide &amp; Crisis Lifeline), available 24/7<br>
+      • <strong>International:</strong> <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a> to find a helpline in your country<br>
+      • If you are in immediate danger, please contact local emergency services.<br><br>
+      I'm just a simple program and can't provide the support a real person can — but you matter, and help is available.
+    </div>`;
+}
+
+// ---- Rule-based response engine ----
+// Each rule: { patterns: [...], responses: [...] }
+const rules = [
+  {
+    patterns: ['anxious', 'anxiety', 'panic', 'worried', 'nervous'],
+    responses: [
+      "Anxiety can feel really overwhelming. Would it help to try a slow breath together — in for 4 counts, hold for 4, out for 6?",
+      "It makes sense to feel anxious sometimes. What's one small thing that's felt grounding for you before?",
+      "That sounds stressful. Sometimes naming what we're anxious about out loud (or typing it) can take a little of its power away — want to tell me more?"
+    ]
+  },
+  {
+    patterns: ['sad', 'down', 'depressed', 'low', 'unmotivated', 'empty'],
+    responses: [
+      "I'm sorry you're feeling this way. Low moods can be heavy to carry — you don't have to carry it alone.",
+      "That sounds really hard. Is there anything, even something tiny, that's brought you a bit of comfort recently?",
+      "Thank you for sharing that with me. Sad feelings are valid, and it's okay to just sit with them for a bit if that's what you need."
+    ]
+  },
+  {
+    patterns: ['angry', 'mad', 'furious', 'frustrated', 'annoyed'],
+    responses: [
+      "That frustration sounds real. What's been building up for you?",
+      "Anger often shows up when something we care about feels threatened or unfair — does that resonate?",
+      "It's okay to feel angry. Would it help to think through what triggered it, or would you rather just vent for a bit?"
+    ]
+  },
+  {
+    patterns: ['tired', 'exhausted', 'burnt out', 'burned out', 'no energy'],
+    responses: [
+      "Burnout is exhausting in every sense. Have you been able to get any real rest lately?",
+      "It sounds like you've been running on empty. What's one thing you could let go of today, even briefly?",
+      "That kind of tiredness is more than just physical sometimes. I'm glad you're checking in with yourself."
+    ]
+  },
+  {
+    patterns: ['happy', 'good', 'great', 'excited', 'grateful'],
+    responses: [
+      "That's wonderful to hear! What's contributing to the good feeling?",
+      "I love that. Savoring good moments like this can help them stick with you a bit longer.",
+      "Glad you're feeling good! Anything you'd like to celebrate or reflect on?"
+    ]
+  },
+  {
+    patterns: ['lonely', 'alone', 'isolated', 'no one understands'],
+    responses: [
+      "Loneliness is a really tough feeling. I'm here to listen, even if it's not the same as human connection.",
+      "That sounds isolating. Is there anyone in your life you might feel comfortable reaching out to, even just to say hi?",
+      "You reaching out here matters. What's been making things feel especially lonely lately?"
+    ]
+  },
+  {
+    patterns: ['stress', 'stressed', 'overwhelmed', 'too much'],
+    responses: [
+      "Feeling overwhelmed is exhausting. If you had to name the top one or two things weighing on you, what would they be?",
+      "That's a lot to hold. Sometimes breaking things into smaller pieces helps — want to try that together?",
+      "Stress like that can build up fast. Have you had a chance to take a real break today?"
+    ]
+  },
+  {
+    patterns: ['thank', 'thanks', 'appreciate'],
+    responses: [
+      "You're very welcome. I'm glad I could offer a bit of support.",
+      "Anytime. Taking a moment to reflect on your feelings is a good thing to do for yourself."
+    ]
+  },
+  {
+    patterns: ['hi', 'hello', 'hey'],
+    responses: [
+      "Hi there. How are you feeling today?",
+      "Hello! I'm glad you're here. What's on your mind?"
+    ]
+  }
+];
+
+const fallbackResponses = [
+  "Thanks for sharing that. Can you tell me a bit more about what's going on?",
+  "I'm listening. What's been the hardest part of your day?",
+  "That sounds important. How long have you been feeling this way?",
+  "I hear you. What would feel most helpful right now — talking it through, or just being heard?"
+];
+
+const moodResponses = {
+  great: "That's great to hear! What's made today feel good?",
+  okay: "Okay is a perfectly fine place to be. Anything on your mind?",
+  meh: "A 'meh' day is still valid. Want to talk about what's making it feel that way?",
+  down: "I'm sorry you're feeling down. I'm here — what's been weighing on you?",
+  anxious: "Anxious feelings can be tough. Want to try a quick breathing exercise, or just talk it out?",
+  angry: "That's a lot to feel. What's been frustrating you?"
+};
+
+function addBubble(html, sender) {
+  const div = document.createElement('div');
+  div.className = 'bubble ' + sender;
+  div.innerHTML = html;
+  chatWindow.appendChild(div);
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getBotReply(text) {
+  if (containsCrisisLanguage(text)) return crisisResponse();
+  const lower = text.toLowerCase();
+  for (const rule of rules) {
+    if (rule.patterns.some(p => lower.includes(p))) {
+      return pick(rule.responses);
+    }
+  }
+  return pick(fallbackResponses);
+}
+
+chatForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const text = userInput.value.trim();
+  if (!text) return;
+  addBubble(escapeHtml(text), 'user');
+  userInput.value = '';
+  setTimeout(() => {
+    addBubble(getBotReply(text), 'bot');
+  }, 350);
+});
+
+moodBar.addEventListener('click', (e) => {
+  if (e.target.tagName !== 'BUTTON') return;
+  const mood = e.target.dataset.mood;
+  addBubble(e.target.textContent, 'user');
+  setTimeout(() => {
+    addBubble(moodResponses[mood], 'bot');
+  }, 300);
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Greeting on load
+window.addEventListener('DOMContentLoaded', () => {
+  addBubble("Hi, I'm MindfulChat 🌿 I'm a simple program that can listen and offer supportive words. How are you feeling today?", 'bot');
+});
+</script>
+
+</body>
+</html>
