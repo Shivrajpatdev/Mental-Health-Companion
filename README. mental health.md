@@ -16,9 +16,3 @@ Please keep this disclaimer visible in any deployment or fork.
 
 ## Running it
 Open `mental-health-companion.html` (or `index.html` if renamed) in any modern browser — no installation needed.
-
-To host it publicly with GitHub Pages:
-1. Push this repo to GitHub
-2. Go to **Settings → Pages**
-3. Set the source branch (e.g. `main`) and root folder
-4. Your chatbot will be live at `https://<username>.github.io/<repo-name>/`
