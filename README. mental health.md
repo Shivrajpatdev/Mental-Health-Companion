@@ -8,15 +8,17 @@ A simple, offline, rule-based mental health support chatbot — built as a singl
 - Detects crisis-related language (e.g. mentions of suicide or self-harm) and immediately surfaces crisis hotline resources instead of a generic reply
 
 ## What it is NOT
-- **Not therapy.** All responses are pre-written and pattern-matched — there is no real understanding or AI model behind it (unless you extend it — see below).
+- **Not therapy.** All responses are pre-written and pattern-matched — there is no real understanding or AI model behind it.
 - **Not a crisis service.** The built-in crisis response points to real hotlines (988 in the US, findahelpline.com internationally), but this app itself cannot help someone in immediate danger.
 - **Not a diagnostic tool.** It doesn't assess, label, or track any mental health condition.
 
 Please keep this disclaimer visible in any deployment or fork.
 
 ## Running it
-Just open `mental-health-companion.html` in any modern browser. To host it publicly:
+Open `mental-health-companion.html` (or `index.html` if renamed) in any modern browser — no installation needed.
+
+To host it publicly with GitHub Pages:
 1. Push this repo to GitHub
 2. Go to **Settings → Pages**
 3. Set the source branch (e.g. `main`) and root folder
-4. Your chatbot will be live at `https://<username>.github.io/<repo-name>/mental-health-companion.html`
+4. Your chatbot will be live at `https://<username>.github.io/<repo-name>/`
